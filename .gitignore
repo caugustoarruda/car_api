@@ -1,0 +1,12 @@
+.env
+/venv
+
+# IDEs
+.vscode/
+.idea/
+
+# cpython
+*.cpython*
+
+# pycahce
+__pycache__
