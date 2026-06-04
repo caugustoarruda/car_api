@@ -16,9 +16,5 @@ async def create_user(user: UserSchema):
 @router.get(path='/', status_code=status.HTTP_200_OK, response_model=UserListPublicSchema)
 async def list_users():
     return {
-        'users': [
-            {'id': 1, 'username': 'Carlos', 'email': 'carlos@gmail.com'},
-            {'id': 2, 'username': 'Augusto', 'email': 'carlos1@gmail.com'},
-            {'id': 3, 'username': 'Arruda', 'email': 'carlos2@gmail.com'},
-        ]
+        'users': USERS
     }
