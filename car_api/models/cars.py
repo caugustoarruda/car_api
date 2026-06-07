@@ -27,7 +27,7 @@ class TransmissionType(str, Enum):
 
 
 class Brand(Base):
-    __tablename__ = 'users'
+    __tablename__ = 'brands'
 
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(50), unique=True)
