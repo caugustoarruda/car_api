@@ -1,10 +1,27 @@
 from datetime import datetime
 from decimal import Decimal
+from enum import Enum
 from typing import Optional
 from sqlalchemy import ForeignKey, String, Text, Numeric, Integer, func
 from sqlalchemy.orm import Mapped,  mapped_column, relationship
 
 from car_api.models import Base
+
+
+class FuelType(str, Enum):
+    GASOLINE = 'gasoline'
+    ETHANOL = 'ethanol'
+    FLEX = 'flex'
+    DIESEL = 'diesel'
+    ELECTRIC = 'electric'
+    HYBRID = 'hybrid'
+
+
+class TransmissionType(str, Enum):
+    MANUAL = 'manual'
+    AUTOMATIC = 'automatic'
+    SEMI_AUTOMATIC = 'semi_automatic'
+    CVT = 'cvt'
 
 
 class Brand(Base):
@@ -33,6 +50,9 @@ class Car(Base):
     model_year: Mapped[int] = mapped_column(Integer)
     color: Mapped[str] = mapped_column(String(30))
     plate: Mapped[str] = mapped_column(String(10), unique=True, index=True)
+
+    fuel_type: Mapped[FuelType] = mapped_column(String(20))
+    transmission: Mapped[TransmissionType] = mapped_column(String(20))
 
     price: Mapped[Decimal] = mapped_column(Numeric(10, 2))
     description: Mapped[Optional[str]] = mapped_column(Text, default=None)
