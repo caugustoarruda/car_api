@@ -58,9 +58,25 @@ class Car(Base):
     description: Mapped[Optional[str]] = mapped_column(Text, default=None)
     is_available: Mapped[bool] = mapped_column(default=True)
 
+    brand_id: Mapped[int] = mapped_column(
+        ForeignKey('brands.id')
+    )
+    owner_id: Mapped[int] = mapped_column(
+        ForeignKey('users.id')
+    )
+
     created_at: Mapped[datetime] = mapped_column(
         server_default=func.now(),
     )
     updated_at: Mapped[datetime] = mapped_column(
         onupdate=func.now(), server_default=func.now()
+    )
+
+    brand: Mapped['Brand'] = relationship(
+        'Brand', 
+        back_populates='cars'
+    )
+    owner: Mapped['User'] = relationship(
+        'Users',
+        back_populates='cars'
     )
