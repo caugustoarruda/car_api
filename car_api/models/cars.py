@@ -1,12 +1,14 @@
 from datetime import datetime
 from decimal import Decimal
 from enum import Enum
-from typing import Optional
+from typing import TYPE_CHECKING, List, Optional
 from sqlalchemy import ForeignKey, String, Text, Numeric, Integer, func
 from sqlalchemy.orm import Mapped,  mapped_column, relationship
 
 from car_api.models import Base
 
+if TYPE_CHECKING:
+    from car_api.models import User
 
 class FuelType(str, Enum):
     GASOLINE = 'gasoline'
@@ -38,7 +40,10 @@ class Brand(Base):
     updated_at: Mapped[datetime] = mapped_column(
         onupdate=func.now(), server_default=func.now()
     )
-
+    cars: Mapped[List['Car']] = relationship(
+        'Car', 
+        back_populates='brand',
+    )
 
 class Car(Base):
     __tablename__ = 'cars'

@@ -1,8 +1,12 @@
 from datetime import datetime
+from typing import TYPE_CHECKING, List
 from sqlalchemy import func
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from car_api.models import Base
+
+if TYPE_CHECKING:
+    from car_api.models import Car
 
 
 class User(Base):
@@ -17,4 +21,7 @@ class User(Base):
     )
     updated_at: Mapped[datetime] = mapped_column(
         onupdate=func.now(), server_default=func.now()
+    )
+    cars: Mapped[List['Car']] = relationship(
+        back_populates='owner',
     )
