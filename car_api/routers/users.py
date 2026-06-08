@@ -3,16 +3,24 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from car_api.schemas.users import UserListPublicSchema, UserSchema, UserPublicSchema
 from car_api.core.database import get_session
 from car_api.db import USERS
+from car_api.models import User
 
 
 router = APIRouter()
 
 
-@router.post(path='/', status_code=status.HTTP_201_CREATED, response_model=UserPublicSchema)
+@router.post(path='/', status_code=status.HTTP_201_CREATED, response_model=UserPublicSchema, summary='Criar novo usuário')
 async def create_user(user: UserSchema, db: AsyncSession = Depends(get_session)):
-    user_with_id = UserPublicSchema(**user.model_dump(), id=len(USERS) + 1)
-    USERS.append(user_with_id)
-    return user_with_id
+    db_user = User(
+        username=user.username,
+        email=user.email,
+        password=user.password
+    )
+    db.add(db_user)
+    await db.commit()
+    await db.refresh(db_user)
+    return db_user
+
 
 @router.get(path='/', status_code=status.HTTP_200_OK, response_model=UserListPublicSchema)
 async def list_users():
@@ -20,11 +28,13 @@ async def list_users():
         'users': USERS
     }
 
+
 @router.put(path='/{user_id}', status_code=status.HTTP_201_CREATED, response_model=UserPublicSchema)
 async def update_user(user_id: int, user:UserSchema):
     user_with_id = UserPublicSchema(**user.model_dump(), id=user_id)
     USERS[user_id - 1] = user_with_id
     return user_with_id
+
 
 @router.delete(path='/{user_id}', status_code=status.HTTP_204_NO_CONTENT)
 async def delete_user(user_id: int):
