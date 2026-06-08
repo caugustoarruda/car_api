@@ -17,7 +17,15 @@ async def create_user(user: UserSchema, db: AsyncSession = Depends(get_session))
     if username_exists:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail='Username já esta sendo utilizado.'
+            detail='Username já está em uso.'
+        )
+    
+    email_exists = await db.scalar(select(exists().where(User.email == user.email)))
+
+    if email_exists:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail='Email já está em uso.'
         )
     
     db_user = User(
