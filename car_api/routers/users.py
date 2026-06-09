@@ -5,6 +5,7 @@ from car_api.schemas.users import UserListPublicSchema, UserSchema, UserPublicSc
 from car_api.core.database import get_session
 from car_api.db import USERS
 from car_api.models import User
+from car_api.core.security import get_password_hash
 
 
 router = APIRouter()
@@ -31,7 +32,7 @@ async def create_user(user: UserSchema, db: AsyncSession = Depends(get_session))
     db_user = User(
         username=user.username,
         email=user.email,
-        password=user.password
+        password=get_password_hash(user.password)
     )
     db.add(db_user)
     await db.commit()
