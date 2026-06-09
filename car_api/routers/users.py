@@ -40,10 +40,13 @@ async def create_user(user: UserSchema, db: AsyncSession = Depends(get_session))
     return db_user
 
 
-@router.get(path='/', status_code=status.HTTP_200_OK, response_model=UserListPublicSchema)
-async def list_users():
+@router.get(path='/', status_code=status.HTTP_200_OK, response_model=UserListPublicSchema, summary='Lista de usuários')
+async def list_users(db: AsyncSession = Depends(get_session)):
+    query = select(User)
+    result = await db.execute(query)
+    users = result.scalars().all()
     return {
-        'users': USERS
+        'users': users
     }
 
 
