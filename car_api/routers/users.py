@@ -1,7 +1,7 @@
 from fastapi import APIRouter, status, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, exists
-from car_api.schemas.users import UserListPublicSchema, UserSchema, UserPublicSchema
+from car_api.schemas.users import UserListPublicSchema, UserSchema, UserPublicSchema, UserUpdateSchema
 from car_api.core.database import get_session
 from car_api.db import USERS
 from car_api.models import User
@@ -57,7 +57,7 @@ async def list_users(
             (User.email.ilike(search_filter))
         )
     query  = query.offset(offset).limit(limit)
-    
+
     result = await db.execute(query)
     users = result.scalars().all()
     return {
@@ -80,10 +80,53 @@ async def get_user(user_id: int, db: AsyncSession = Depends(get_session)):
 
 
 @router.put(path='/{user_id}', status_code=status.HTTP_201_CREATED, response_model=UserPublicSchema)
-async def update_user(user_id: int, user:UserSchema):
-    user_with_id = UserPublicSchema(**user.model_dump(), id=user_id)
-    USERS[user_id - 1] = user_with_id
-    return user_with_id
+async def update_user(user_id: int, user_update:UserUpdateSchema, db: AsyncSession = Depends(get_session)):
+    user = await db.get(User, user_id)
+    
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail='Usuário não encontrado'
+        )
+
+    update_data = user_update.model_dump(exclude_unset=True)
+
+    if 'username' in update_data and update_data['username'] != user.username:
+        username_exists = await db.scalar(
+            select(exists().where(
+                (User.username == update_data['username']) & 
+                (User.id != user_id)
+            ))
+        )
+        if username_exists:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail='Username já está em uso',
+            )
+
+    if 'email' in update_data and update_data['email'] != user.email:
+        email_exists = await db.scalar(
+            select(exists().where(
+                (User.email == update_data['email']) & 
+                (User.id != user_id)
+            ))
+        )
+        if email_exists:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail='Email já está em uso'
+            )
+
+    if 'password' in update_data:
+        update_data['password'] = get_password_hash(update_data['password'])
+
+    for field, value in update_data.items():
+        setattr(user, field, value)
+
+    await db.commit()
+    await db.refresh(user)
+
+    return user
 
 
 @router.delete(path='/{user_id}', status_code=status.HTTP_204_NO_CONTENT, summary='Deletar usuário')
