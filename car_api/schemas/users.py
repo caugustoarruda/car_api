@@ -22,3 +22,5 @@ class UserUpdateSchema(BaseModel):
 
 class UserListPublicSchema(BaseModel):
     users: List[UserPublicSchema]
+    offset: int
+    limit: int
