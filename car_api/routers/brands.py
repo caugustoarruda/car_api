@@ -30,3 +30,27 @@ async def create_brand(brand: BrandSchema, db: AsyncSession = Depends(get_sessio
     await db.commit()
     await db.refresh(db_brand)
     return db_brand
+
+
+@router.delete(path='/{brand_id}', status_code=status.HTTP_204_NO_CONTENT, summary='Deletar marca')
+async def delete_brand(brand_id: int, db: AsyncSession = Depends(get_session)):
+    brand = await db.get(Brand, brand_id)
+
+    if not brand:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail='Marca não encontrada'
+        )
+    
+    cars_count = await db.scalar(select(func.count()).select_from(Car).where(Car.brand_id == brand_id))
+
+    if cars_count > 0:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail='Não é possivel deletar marca que possui carros associados'
+        )
+    
+    await db.delete(brand)
+    await db.commit()
+
+    return
