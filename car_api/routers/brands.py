@@ -32,6 +32,18 @@ async def create_brand(brand: BrandSchema, db: AsyncSession = Depends(get_sessio
     return db_brand
 
 
+@router.get(path='/{brand_id}', status_code=status.HTTP_200_OK, response_model=BrandPublicSchema, summary='Busca marcar por id')
+async def get_brand(brand_id: int, db: AsyncSession = Depends(get_session)):
+    brand = await db.get(Brand, brand_id)
+
+    if not brand:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail='Marca não encontrada'
+        )
+    return brand
+
+
 @router.delete(path='/{brand_id}', status_code=status.HTTP_204_NO_CONTENT, summary='Deletar marca')
 async def delete_brand(brand_id: int, db: AsyncSession = Depends(get_session)):
     brand = await db.get(Brand, brand_id)
