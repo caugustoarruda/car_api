@@ -22,6 +22,40 @@ class CarSchema(BaseModel):
     brand_id: int
     owner_id: int
 
+    @field_validator('model')
+    def model_min_length(cls, field):
+        if len(field.strip()) < 2:
+            raise ValueError('Modelo deve ter pelo menos 2 caracteres')
+        
+        return field.strip()
+    
+    @field_validator('color')
+    def color_min_length(cls, field):
+        if len(field.strip()) < 2:
+            raise ValueError('Color deve ter pelo menos 2 caracteres')
+        
+        return field.strip()
+    
+    @field_validator('plate')
+    def plate_format(cls, field):
+        plate = field.strip()
+        if len(plate) < 7 or len(plate) > 10:
+            raise ValueError('Placa deve ter entre 7 e 10 caracteres')
+        return plate
+    
+    @field_validator('factory_year', 'model_year')
+    def year_validation(cls, field):
+        if field < 1900 or field > 2030:
+            raise ValueError('Ano deve estar entre 1900 e 2030')
+        return field
+    
+    @field_validator('price')
+    def price_validation(cls, field):
+        if field <= 0:
+            raise ValueError('Preço deve ser maior que zero')
+        return field
+
+
 
 class CarUpdateSchema(BaseModel):
     model: Optional[str] = None
@@ -36,6 +70,39 @@ class CarUpdateSchema(BaseModel):
     is_available: Optional[bool] = None
     brand_id: Optional[int] = None
     owner_id: Optional[int] = None
+
+        @field_validator('model')
+    def model_min_length(cls, field):
+        if len(field.strip()) < 2:
+            raise ValueError('Modelo deve ter pelo menos 2 caracteres')
+        
+        return field.strip()
+    
+    @field_validator('color')
+    def color_min_length(cls, field):
+        if len(field.strip()) < 2:
+            raise ValueError('Color deve ter pelo menos 2 caracteres')
+        
+        return field.strip()
+    
+    @field_validator('plate')
+    def plate_format(cls, field):
+        plate = field.strip()
+        if len(plate) < 7 or len(plate) > 10:
+            raise ValueError('Placa deve ter entre 7 e 10 caracteres')
+        return plate
+    
+    @field_validator('factory_year', 'model_year')
+    def year_validation(cls, field):
+        if field < 1900 or field > 2030:
+            raise ValueError('Ano deve estar entre 1900 e 2030')
+        return field
+    
+    @field_validator('price')
+    def price_validation(cls, field):
+        if field <= 0:
+            raise ValueError('Preço deve ser maior que zero')
+        return field
 
 
 class CarPublicSchema(BaseModel):
