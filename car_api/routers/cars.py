@@ -139,6 +139,76 @@ async def list_cars(
     }
 
 
+@router.put(
+    path='/{car_id}',
+    status_code=status.HTTP_200_OK,
+    response_model=CarPublicSchema,
+    summary='Atualizar carro'
+)
+async def update_car(
+    car_id: int,
+    car_update: CarUpdateSchema,
+    db: AsyncSession = Depends(get_session),
+):
+    car = await db.get(Car, car_id)
+    
+    if not car:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail='Carro não encontrado'
+        )
+
+    update_data = car_update.model_dump(exclude_unset=True)
+
+    if 'plate' in update_data and update_data['plate'] != car.plate:
+        plate_exists = await db.scalar(
+            select(exists().where(
+                (Car.plate == update_data['plate']) & 
+                (Car.id != car_id)
+            ))
+        )
+        if plate_exists:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail='Placa já está em uso',
+            )
+
+    if 'brand_id' in update_data:
+        brand_exists = await db.scalar(
+            select(exists().where(Brand.id == update_data['brand_id']))
+        )
+        if not brand_exists:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail='Marca não encontrada',
+            )
+
+    if 'owner_id' in update_data:
+        owner_exists = await db.scalar(
+            select(exists().where(User.id == update_data['owner_id']))
+        )
+        if not owner_exists:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail='Proprietário não encontrado',
+            )
+
+    for field, value in update_data.items():
+        setattr(car, field, value)
+
+    await db.commit()
+    await db.refresh(car)
+
+    result = await db.execute(
+        select(Car)
+        .options(selectinload(Car.brand), selectinload(Car.owner))
+        .where(Car.id == car_id)
+    )
+    car_with_relations = result.scalar_one()
+
+    return car_with_relations
+
+
 @router.delete(path='/{car_id}', status_code=status.HTTP_204_NO_CONTENT, summary='Deletar carro')
 async def delete_car(car_id: int, db: AsyncSession = Depends(get_session)):
     car = await db.get(Car, car_id)
