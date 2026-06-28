@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from typing import Optional
 from fastapi import APIRouter, status, HTTPException, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from car_api.core.database import get_session
@@ -75,6 +75,68 @@ async def get_car(car_id: int, db: AsyncSession = Depends(get_session)):
         )
     
     return car
+
+
+@router.get(
+    path='/',
+    status_code=status.HTTP_200_OK,
+    response_model=CarListPublicSchema,
+    summary='Listar carros',
+)
+async def list_cars(
+    offset: int = Query(0, ge=0, description='Número de registros para pular'),
+    limit: int = Query(100, ge=1, le=100, description='Limite de registros'),
+    search: Optional[str] = Query(None, description='Buscar por modelo, cor ou placa'),
+    brand_id: Optional[int] = Query(None, description='Filtrar por marca'),
+    owner_id: Optional[int] = Query(None, description='Filtrar por proprietário'),
+    fuel_type: Optional[FuelType] = Query(None, description='Filtrar por tipo de combustível'),
+    transmission: Optional[TransmissionType] = Query(None, description='Filtrar por transmissão'),
+    is_available: Optional[bool] = Query(None, description='Filtrar por disponibilidade'),
+    min_price: Optional[float] = Query(None, ge=0, description='Preço mínimo'),
+    max_price: Optional[float] = Query(None, ge=0, description='Preço máximo'),
+    db: AsyncSession = Depends(get_session),
+):
+    query = select(Car).options(selectinload(Car.brand), selectinload(Car.owner))
+
+    if search:
+        search_filter = f'%{search}%'
+        query = query.where(
+            (Car.model.ilike(search_filter)) | 
+            (Car.color.ilike(search_filter)) |
+            (Car.plate.ilike(search_filter))
+        )
+
+    if brand_id is not None:
+        query = query.where(Car.brand_id == brand_id)
+
+    if owner_id is not None:
+        query = query.where(Car.owner_id == owner_id)
+
+    if fuel_type is not None:
+        query = query.where(Car.fuel_type == fuel_type)
+
+    if transmission is not None:
+        query = query.where(Car.transmission == transmission)
+
+    if is_available is not None:
+        query = query.where(Car.is_available == is_available)
+
+    if min_price is not None:
+        query = query.where(Car.price >= min_price)
+
+    if max_price is not None:
+        query = query.where(Car.price <= max_price)
+
+    query = query.offset(offset).limit(limit)
+
+    result = await db.execute(query)
+    cars = result.scalars().all()
+
+    return {
+        'cars': cars,
+        'offset': offset,
+        'limit': limit
+    }
 
 
 @router.delete(path='/{car_id}', status_code=status.HTTP_204_NO_CONTENT, summary='Deletar carro')
