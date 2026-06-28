@@ -75,3 +75,19 @@ async def get_car(car_id: int, db: AsyncSession = Depends(get_session)):
         )
     
     return car
+
+
+@router.delete(path='/{car_id}', status_code=status.HTTP_204_NO_CONTENT, summary='Deletar carro')
+async def delete_car(car_id: int, db: AsyncSession = Depends(get_session)):
+    car = await db.get(Car, car_id)
+
+    if not car:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail='Carro não encontrado'
+        )
+    
+    await db.delete(car)
+    await db.commit()
+
+    return
